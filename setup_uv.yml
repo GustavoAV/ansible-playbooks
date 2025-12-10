@@ -31,8 +31,8 @@
         creates: ~/.local/bin/uv
 
     - name: Validate install
-      ansible.builtin.command:
-        cmd: uv --version
+      ansible.builtin.shell:
+        cmd: $HOME/.local/bin/uv --version
       changed_when: false
 
     - name: Configure bash completion
@@ -41,5 +41,5 @@
         path: ~/.bashrc
         state: present
       loop:
-        - eval "$(uv generate-shell-completion bash)"
-        - eval "$(uvx --generate-shell-completion bash)"
+        - eval "$($HOME/.local/bin/uv generate-shell-completion bash)"
+        - eval "$($HOME/.local/bin/uvx --generate-shell-completion bash)"
