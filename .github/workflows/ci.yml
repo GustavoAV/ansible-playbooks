@@ -50,6 +50,8 @@ jobs:
     needs: [generate-matrix, lint]
     runs-on: ubuntu-latest
     strategy:
+      # Doesn't stop all jobs if a single job fails
+      fail-fast: false
       matrix:
         playbook: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
