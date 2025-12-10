@@ -2,7 +2,10 @@
 - name: Setup VSCode
   hosts: all
   vars:
-    vscode_installer_file_format: "{% if ansible_facts['os_family'] == \"Debian\" %}deb{% else if ansible_facts['os_family'] == \"RedHat\" %}rpm{% endif %}"
+    vscode_installer_file_format: >-
+      {%- if ansible_facts['os_family'] == "Debian" -%}deb
+      {%- else if ansible_facts['os_family'] == "RedHat" -%}rpm
+      {%- endif -%}
     vscode_installer_file_path: /tmp/code.{{ vscode_installer_file_format }}
     # yamllint disable-line rule:line-length
     vscode_download_url: https://code.visualstudio.com/sha/download?build=stable&os=linux-{{ vscode_installer_file_format }}-x{{ ansible_facts['userspace_bits'] }}
