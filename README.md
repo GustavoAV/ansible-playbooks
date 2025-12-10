@@ -49,5 +49,5 @@ molecule --version
 And then, to test a playbook:
 
 ```bash
-molecule test MOLECULE_PLAYBOOK=setup_uv.yml
+MOLECULE_PLAYBOOK=setup_uv.yml molecule test
 ```
