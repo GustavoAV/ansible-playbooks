@@ -24,10 +24,20 @@
         vagrant_redhat_repo: "{% if ansible_facts['distribution'] == \"Fedora\" %}fedora{% else %}RHEL{% endif %}"
       when: ansible_facts['os_family'] == "RedHat"
 
-    - name: Install Vagrant
-      ansible.builtin.package:
+    - name: Install Vagrant (Debian)
+      ansible.builtin.apt:
         name: vagrant
         state: present
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install Vagrant (RedHat)
+      ansible.builtin.dnf:
+        name: vagrant
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Validate install
       ansible.builtin.command:

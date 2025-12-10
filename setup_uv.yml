@@ -3,7 +3,7 @@
 - name: Setup UV
   hosts: all
   vars:
-    uv_install_dependencies: [bash, curl]
+    uv_install_dependencies: [bash, wget]
     uv_generate_shell_completion: false
 
   tasks:
@@ -26,7 +26,7 @@
 
     - name: Download script and install
       ansible.builtin.shell:
-        cmd: set -o pipefail && curl -LsSf https://astral.sh/uv/install.sh | sh
+        cmd: set -o pipefail && wget -qO- https://astral.sh/uv/install.sh | sh
         executable: /bin/bash
         creates: ~/.local/bin/uv
 

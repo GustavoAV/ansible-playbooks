@@ -22,6 +22,8 @@
       ansible.builtin.apt:
         deb: "{{ vscode_installer.dest }}"
         state: present
+        update_cache: true
+        cache_valid_time: 3600
       become: true
       when: ansible_facts['os_family'] == "Debian"
 
@@ -29,6 +31,7 @@
       ansible.builtin.dnf:
         name: "{{ vscode_installer.dest }}"
         state: present
+        update_cache: true
       become: true
       when: ansible_facts['os_family'] == "RedHat"
 

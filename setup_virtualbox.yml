@@ -5,12 +5,6 @@
   become: true
   vars:
     vbox_version: 7.2
-    vbox_package_name: >-
-      {%- if ansible_facts['os_family'] == "Debian" -%}
-        virtualbox-{{ vbox_version }}
-      {%- elif ansible_facts['os_family'] == "RedHat" -%}
-        VirtualBox-{{ vbox_version }}
-      {%- endif -%}
 
   tasks:
     - name: Add repository (Debian)
@@ -33,10 +27,20 @@
         vbox_redhat_repo: "{% if ansible_facts['distribution'] == \"Fedora\" %}fedora{% else %}el{% endif %}"
       when: ansible_facts['os_family'] == "RedHat"
 
-    - name: Install VirtualBox
-      ansible.builtin.package:
-        name: "{{ vbox_package_name }}"
+    - name: Install VirtualBox (Debian)
+      ansible.builtin.apt:
+        name: virtualbox-{{ vbox_version }}
         state: present
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install VirtualBox (RedHat)
+      ansible.builtin.dnf:
+        name: VirtualBox-{{ vbox_version }}
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Validate install
       ansible.builtin.command:
