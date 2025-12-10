@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4
+      
+      - name: List playbooks
+        id: set-matrix
+        run: |
+          # Assembles JSON array with playbooks, e.g: ["play.yml", "setup.yml"]
+          playbooks_json=$(ls *.yml \
+            | grep -v requirements.yml \
+            | jq --raw-input . \
+            | jq --compact-output --slurp .)
+          echo "matrix=$playbooks_json" >> $GITHUB_OUTPUT
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install lint dependencies
+        run: pip install ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint .
+        env:
+          FORCE_COLOR: "1"
+
+  molecule:
+    needs: [generate-matrix, lint]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        playbook: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4
+
+      # Fails without "requirements.txt" for some reason
+      # https://github.com/marketplace/actions/build-and-setup-python#no-file-in--matched-to-requirementstxt-or-pyprojecttoml-make-sure-you-have-checked-out-the-target-repository
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('molecule/default/molecule.yml') }}
+
+      - name: Run Molecule tests
+        run: molecule test MOLECULE_PLAYBOOK=${{ matrix.playbook }}
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'

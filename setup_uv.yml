@@ -1,0 +1,46 @@
+# https://docs.astral.sh/uv/#installation
+---
+- name: Setup UV
+  hosts: all
+  gather_facts: false
+  vars:
+    uv_install_dependencies: [bash, curl]
+    uv_generate_shell_completion: false
+
+  tasks:
+    - name: Install dependencies (Debian)
+      ansible.builtin.apt:
+        name: "{{ uv_install_dependencies }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install dependencies (RedHat)
+      ansible.builtin.dnf:
+        name: "{{ uv_install_dependencies }}"
+        state: present
+        update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Download script and install
+      ansible.builtin.shell:
+        cmd: set -o pipefail && curl -LsSf https://astral.sh/uv/install.sh | sh
+        executable: /bin/bash
+        creates: ~/.local/bin/uv
+
+    - name: Validate install
+      ansible.builtin.command:
+        cmd: uv --version
+      changed_when: false
+
+    - name: Configure bash completion
+      ansible.builtin.lineinfile:
+        line: "{{ item }}"
+        path: ~/.bashrc
+        state: present
+      loop:
+        - eval "$(uv generate-shell-completion bash)"
+        - eval "$(uvx --generate-shell-completion bash)"

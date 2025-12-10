@@ -1,0 +1,36 @@
+---
+- name: Get machine architecture
+  ansible.builtin.command:
+    cmd: dpkg --print-architecture
+  changed_when: false
+  register: debrepo_dpkg_arch
+
+# Gets the proper codename even when running on Ubuntu based (e.g. Linux Mint)
+- name: Gets distro codename
+  ansible.builtin.shell:
+    cmd: . /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+  changed_when: false
+  register: debrepo_distro_codename
+
+- name: Install dependencies
+  ansible.builtin.apt:
+    name: gnupg
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Download public key
+  ansible.builtin.get_url:
+    url: "{{ debrepo_gpg_key_url }}"
+    dest: /tmp/{{ debrepo_gpg_key_path | basename }}
+    mode: "0644"
+
+- name: Import key
+  ansible.builtin.command:
+    cmd: gpg --yes --output {{ debrepo_gpg_key_path }} --dearmor /tmp/{{ debrepo_gpg_key_path | basename }}
+    creates: "{{ debrepo_gpg_key_path }}"
+
+- name: Add repository
+  ansible.builtin.apt_repository:
+    repo: "{{ debrepo_string }}"
+    state: present

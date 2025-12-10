@@ -1,0 +1,36 @@
+---
+- name: Setup VSCode
+  hosts: all
+  vars:
+    vscode_installer_file_format: "{% if ansible_facts['os_family'] == \"Debian\" %}deb{% else if ansible_facts['os_family'] == \"RedHat\" %}rpm{% endif %}"
+    vscode_installer_file_path: /tmp/code.{{ vscode_installer_file_format }}
+    # yamllint disable-line rule:line-length
+    vscode_download_url: https://code.visualstudio.com/sha/download?build=stable&os=linux-{{ vscode_installer_file_format }}-x{{ ansible_facts['userspace_bits'] }}
+    vscode_install_plugins: []
+
+  tasks:
+    - name: Download package
+      ansible.builtin.get_url:
+        url: "{{ vscode_download_url }}"
+        dest: "{{ vscode_installer_file_path }}"
+        mode: "0644"
+
+    - name: Install package (Debian)
+      ansible.builtin.apt:
+        deb: "{{ vscode_installer_file_path }}"
+        state: present
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install package (RedHat)
+      ansible.builtin.dnf:
+        name: "{{ vscode_installer_file_path }}"
+        state: present
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Install plugins
+      ansible.builtin.command:
+        cmd: code --install-extension {{ item }}
+      changed_when: true
+      loop: "{{ vscode_install_plugins }}"
