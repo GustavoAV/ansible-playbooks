@@ -8,7 +8,7 @@
     vbox_package_name: >-
       {%- if ansible_facts['os_family'] == "Debian" -%}
         virtualbox-{{ vbox_version }}
-      {%- else if ansible_facts['os_family'] == "RedHat" -%}
+      {%- elif ansible_facts['os_family'] == "RedHat" -%}
         VirtualBox-{{ vbox_version }}
       {%- endif -%}
 

@@ -73,7 +73,7 @@ jobs:
           key: docker-${{ runner.os }}-${{ hashFiles('molecule/default/molecule.yml') }}
 
       - name: Run Molecule tests
-        run: MOLECULE_PLAYBOOK=${{ matrix.playbook }} molecule -v test --destroy=never
+        run: MOLECULE_PLAYBOOK=${{ matrix.playbook }} molecule test
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
