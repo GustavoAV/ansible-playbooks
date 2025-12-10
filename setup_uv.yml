@@ -2,7 +2,6 @@
 ---
 - name: Setup UV
   hosts: all
-  gather_facts: false
   vars:
     uv_install_dependencies: [bash, curl]
     uv_generate_shell_completion: false
