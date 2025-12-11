@@ -1,0 +1,35 @@
+---
+- name: Setup UV
+  ansible.builtin.import_playbook: setup_uv.yml
+
+- name: Setup random cowsay
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install Python tools
+      ansible.builtin.command:
+        cmd: ~/.local/bin/uv tool install {{ item.package_name }}
+        creates: ~/.local/bin/{{ item.installed_binary }}
+      loop:
+        - package_name: python-cowsay
+          installed_binary: cowsay
+        - package_name: fortune-python
+          installed_binary: fortune
+        - package_name: lolcat
+          installed_binary: lolcat
+
+    - name: Configure command in ~/.bashrc
+      ansible.builtin.lineinfile:
+        line: cowsay --random "$(fortune)" | lolcat
+        path: ~/.bashrc
+        state: present
+
+    - name: Validate install
+      ansible.builtin.command:
+        cmd: bash -ic "echo"
+      changed_when: false
+      register: random_cowsay_validate
+
+    - name: Show command output
+      ansible.builtin.debug:
+        var: random_cowsay_validate.stdout_lines
