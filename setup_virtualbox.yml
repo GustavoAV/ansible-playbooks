@@ -11,20 +11,24 @@
       ansible.builtin.include_tasks:
         file: tasks/add_debian_repo.yml
       vars:
-        debrepo_gpg_key_url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
-        debrepo_gpg_key_path: /usr/share/keyrings/oracle-virtualbox-2016.gpg
-        debrepo_string: >-
-          deb [arch={{ debrepo_dpkg_arch.stdout }} signed-by={{ debrepo_gpg_key_path }}]
-          https://download.virtualbox.org/virtualbox/debian {{ debrepo_distro_codename.stdout }} contrib
+        debian_repo_key_url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+        debian_repo_key_path: /usr/share/keyrings/oracle-virtualbox-2016.gpg
+        debian_repo_filename: oracle-virtualbox
+        debian_repo_list: >-
+          deb [arch={{ debian_dpkg_arch.stdout }} signed-by={{ debian_repo_key_path }}]
+          https://download.virtualbox.org/virtualbox/debian {{ debian_distro_codename.stdout }} contrib
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Add repository (RedHat)
       ansible.builtin.get_url:
-        url: https://download.virtualbox.org/virtualbox/rpm/{{ vbox_redhat_repo }}/virtualbox.repo
+        url: >-
+          {%- if ansible_facts['distribution'] == "Fedora" -%}
+            https://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo
+          {%- else -%}
+            https://download.virtualbox.org/virtualbox/rpm/el/virtualbox.repo
+          {%- endif -%}
         dest: /etc/yum.repos.d/virtualbox.repo
         mode: "0644"
-      vars:
-        vbox_redhat_repo: "{% if ansible_facts['distribution'] == \"Fedora\" %}fedora{% else %}el{% endif %}"
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Install VirtualBox (Debian)

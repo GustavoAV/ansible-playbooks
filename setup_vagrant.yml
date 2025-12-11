@@ -8,20 +8,24 @@
       ansible.builtin.include_tasks:
         file: tasks/add_debian_repo.yml
       vars:
-        debrepo_gpg_key_url: https://apt.releases.hashicorp.com/gpg
-        debrepo_gpg_key_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
-        debrepo_string: >-
-          deb [arch={{ debrepo_dpkg_arch.stdout }} signed-by={{ debrepo_gpg_key_path }}]
-          https://apt.releases.hashicorp.com {{ debrepo_distro_codename.stdout }} main
+        debian_repo_key_url: https://apt.releases.hashicorp.com/gpg
+        debian_repo_key_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        debian_repo_filename: hashicorp
+        debian_repo_list: >-
+          deb [arch={{ debian_dpkg_arch.stdout }} signed-by={{ debian_repo_key_path }}]
+          https://apt.releases.hashicorp.com {{ debian_distro_codename.stdout }} main
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Add repository (RedHat)
       ansible.builtin.get_url:
-        url: https://rpm.releases.hashicorp.com/{{ vagrant_redhat_repo }}/hashicorp.repo
-        dest: /etc/yum.repos.d/vagrant.repo
+        url: >-
+          {%- if ansible_facts['distribution'] == "Fedora" -%}
+            https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
+          {%- else -%}
+            https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+          {%- endif -%}
+        dest: /etc/yum.repos.d/hashicorp.repo
         mode: "0644"
-      vars:
-        vagrant_redhat_repo: "{% if ansible_facts['distribution'] == \"Fedora\" %}fedora{% else %}RHEL{% endif %}"
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Install Vagrant (Debian)

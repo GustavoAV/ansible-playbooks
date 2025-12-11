@@ -1,36 +1,64 @@
+## Usage:
+# - name: Add repository (Debian)
+#   ansible.builtin.include_tasks:
+#     file: tasks/add_debian_repo.yml
+#   vars:
+#     debian_repo_key_url: https://example.com/download/key.asc
+#     debian_repo_key_path: /usr/share/keyrings/example-key.gpg
+#     debian_repo_filename: example-repo
+#     debian_repo_list: >-
+#       deb [arch={{ debian_dpkg_arch.stdout }} signed-by={{ debian_repo_key_path }}]
+#       https://download.example.com/repo/debian {{ debian_distro_codename.stdout }} main
+#     debian_repo_sources: |-
+#       Types: deb
+#       URIs: https://download.example.com/repo/debian
+#       Suites: example
+#       Components: main
+#       ...
+#   when: ansible_facts['os_family'] == "Debian"
 ---
-- name: Get machine architecture
+- name: Debian repo | Get machine architecture
   ansible.builtin.command:
     cmd: dpkg --print-architecture
   changed_when: false
-  register: debrepo_dpkg_arch
+  register: debian_dpkg_arch
 
 # Gets the proper codename even when running on Ubuntu based (e.g. Linux Mint)
-- name: Gets distro codename
+- name: Debian repo | Gets distro codename
   ansible.builtin.shell:
     cmd: . /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}"
   changed_when: false
-  register: debrepo_distro_codename
+  register: debian_distro_codename
 
-- name: Install dependencies
+- name: Debian repo | Install dependencies
   ansible.builtin.apt:
-    name: gnupg
+    name: [bash, gnupg, wget]
     state: present
     update_cache: true
     cache_valid_time: 3600
 
-- name: Download public key
-  ansible.builtin.get_url:
-    url: "{{ debrepo_gpg_key_url }}"
-    dest: /tmp/{{ debrepo_gpg_key_path | basename }}
-    mode: "0644"
+- name: Debian repo | Download and register key
+  ansible.builtin.shell:
+    cmd: set -o pipefail &&
+      wget -O- {{ debian_repo_key_url }} | gpg --yes --output {{ debian_repo_key_path }} --dearmor
+    creates: "{{ debian_repo_key_path }}"
+    executable: /bin/bash
 
-- name: Import key
-  ansible.builtin.command:
-    cmd: gpg --yes --output {{ debrepo_gpg_key_path }} --dearmor /tmp/{{ debrepo_gpg_key_path | basename }}
-    creates: "{{ debrepo_gpg_key_path }}"
-
-- name: Add repository
+- name: Debian repo | Add repository (line format)
   ansible.builtin.apt_repository:
-    repo: "{{ debrepo_string }}"
+    repo: "{{ debian_repo_list }}"
     state: present
+    filename: "{{ debian_repo_filename }}"
+    update_cache: true
+  when:
+    - debian_repo_list is defined
+    - debian_repo_list | length > 0
+
+- name: Debian repo | Add repository (deb822 format)
+  ansible.builtin.copy:
+    content: "{{ debian_repo_sources }}"
+    dest: /etc/apt/sources.list.d/{{ debian_repo_filename }}.sources
+    mode: "0644"
+  when:
+    - debian_repo_sources is defined
+    - debian_repo_sources | length > 0
