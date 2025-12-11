@@ -4,7 +4,7 @@
   hosts: all
   vars:
     uv_install_dependencies: [bash, wget]
-    uv_generate_shell_completion: false
+    uv_configure_shell_completion: false
 
   tasks:
     - name: Install dependencies (Debian)
@@ -43,4 +43,4 @@
       loop:
         - eval "$(uv generate-shell-completion bash)"
         - eval "$(uvx --generate-shell-completion bash)"
-      when: uv_generate_shell_completion is truthy
+      when: uv_configure_shell_completion is truthy

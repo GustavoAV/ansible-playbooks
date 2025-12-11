@@ -3,6 +3,9 @@
 - name: Setup Vagrant
   hosts: all
   become: true
+  vars:
+    vagrant_configure_bash_completion: false
+
   tasks:
     - name: Add repository (Debian)
       ansible.builtin.include_tasks:
@@ -49,3 +52,10 @@
       ansible.builtin.command:
         cmd: vagrant --version
       changed_when: false
+
+    - name: Configure bash autocompletion
+      ansible.builtin.lineinfile:
+        line: . /opt/vagrant/embedded/gems/gems/vagrant-$(vagrant --version | cut -d' ' -f2)/contrib/bash/completion.sh
+        path: ~/.bashrc
+        state: present
+      when: vagrant_configure_bash_completion is truthy
