@@ -37,6 +37,14 @@
     update_cache: true
     cache_valid_time: 3600
 
+- name: Debian repo | Create key directory
+  ansible.builtin.file:
+    path: "{{ debian_repo_key_path | dirname }}"
+    mode: "0755"
+    state: directory
+    owner: root
+    group: root
+
 - name: Debian repo | Download and register key
   ansible.builtin.shell:
     cmd: set -o pipefail &&
@@ -59,6 +67,8 @@
     content: "{{ debian_repo_sources }}"
     dest: /etc/apt/sources.list.d/{{ debian_repo_filename }}.sources
     mode: "0644"
+    owner: root
+    group: root
   when:
     - debian_repo_sources is defined
     - debian_repo_sources | length > 0
