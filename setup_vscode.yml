@@ -1,42 +1,60 @@
+# Based on: https://code.visualstudio.com/docs/setup/linux
 ---
 - name: Setup VSCode
   hosts: all
+  become: true
   vars:
-    vscode_installer_file_format: >-
-      {%- if ansible_facts['os_family'] == "Debian" -%}deb
-      {%- elif ansible_facts['os_family'] == "RedHat" -%}rpm
-      {%- endif -%}
-    # yamllint disable-line rule:line-length
-    vscode_download_url: https://code.visualstudio.com/sha/download?build=stable&os=linux-{{ vscode_installer_file_format }}-x{{ ansible_facts['userspace_bits'] }}
     vscode_install_plugins: []
 
   tasks:
-    - name: Download package
-      ansible.builtin.get_url:
-        url: "{{ vscode_download_url }}"
-        dest: /tmp/
+    - name: Add repository (Debian)
+      ansible.builtin.include_tasks:
+        file: tasks/add_debian_repo.yml
+      vars:
+        debian_repo_key_url: https://packages.microsoft.com/keys/microsoft.asc
+        debian_repo_key_path: /usr/share/keyrings/microsoft.gpg
+        debian_repo_filename: vscode
+        debian_repo_sources: |-
+          Types: deb
+          URIs: https://packages.microsoft.com/repos/code
+          Suites: stable
+          Components: main
+          Architectures: {{ debian_dpkg_arch.stdout }}
+          Signed-By: {{ debian_repo_key_path }}
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Add repository (RedHat)
+      ansible.builtin.copy:
+        content: |
+          [code]
+          name=Visual Studio Code
+          baseurl=https://packages.microsoft.com/yumrepos/vscode
+          enabled=1
+          autorefresh=1
+          type=rpm-md
+          gpgcheck=1
+          gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+        dest: /etc/yum.repos.d/vscode.repo
         mode: "0644"
-      register: vscode_installer
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Install package (Debian)
       ansible.builtin.apt:
-        deb: "{{ vscode_installer.dest }}"
+        name: code
         state: present
         update_cache: true
-        cache_valid_time: 3600
-      become: true
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Install package (RedHat)
       ansible.builtin.dnf:
-        name: "{{ vscode_installer.dest }}"
+        name: code
         state: present
         update_cache: true
-      become: true
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Install plugins
       ansible.builtin.command:
         cmd: code --install-extension {{ item }}
+      become: false
       changed_when: true
       loop: "{{ vscode_install_plugins }}"

@@ -12,9 +12,10 @@
 #     debian_repo_sources: |-
 #       Types: deb
 #       URIs: https://download.example.com/repo/debian
-#       Suites: example
+#       Suites: {{ debian_distro_codename.stdout }}
 #       Components: main
-#       ...
+#       Architectures: {{ debian_dpkg_arch.stdout }}
+#       Signed-By: {{ debian_repo_key_path }}
 #   when: ansible_facts['os_family'] == "Debian"
 ---
 - name: Debian repo | Get machine architecture
@@ -32,7 +33,11 @@
 
 - name: Debian repo | Install dependencies
   ansible.builtin.apt:
-    name: [bash, gnupg, wget]
+    name:
+      - apt-transport-https
+      - bash
+      - gnupg
+      - wget
     state: present
     update_cache: true
     cache_valid_time: 3600

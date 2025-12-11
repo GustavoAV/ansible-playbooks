@@ -1,4 +1,4 @@
-# https://docs.astral.sh/uv/#installation
+# Based on: https://docs.astral.sh/uv/#installation
 ---
 - name: Setup UV
   hosts: all
