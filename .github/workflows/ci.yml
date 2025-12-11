@@ -69,13 +69,8 @@ jobs:
       - name: Install Python packages
         run: pip install -r requirements.txt
 
-      - name: Cache Docker images
-        uses: ScribeMD/docker-cache@0.5.0
-        with:
-          key: docker-${{ runner.os }}-${{ hashFiles('molecule/default/molecule.yml') }}
-
       - name: Run Molecule tests
-        run: MOLECULE_PLAYBOOK=${{ matrix.playbook }} molecule test
+        run: MOLECULE_PLAYBOOK=${{ matrix.playbook }} molecule test -- --diff -v
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
