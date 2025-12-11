@@ -62,7 +62,6 @@
     repo: "{{ debian_repo_list }}"
     state: present
     filename: "{{ debian_repo_filename }}"
-    update_cache: true
   when:
     - debian_repo_list is defined
     - debian_repo_list | length > 0
