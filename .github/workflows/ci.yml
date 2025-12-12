@@ -31,18 +31,20 @@ jobs:
           else
             range="${{ github.event.before }}...${{ github.sha }}"
           fi
-          
-          # Get changed tasks and playbooks
-          changed_tasks="$(git diff --name-only $range | grep -E "^tasks/.*\.yml$")"
-          changed_playbooks="$(git diff --name-only $range | grep -E "^playbooks/.*\.yml$")"
-          
-          # Add changed playbooks to test list
-          playbooks_to_test="$changed_playbooks"
 
-          # If "tasks/add_debian_repo.yml" is changed, also add playbooks that include it in the test list
-          if $(echo "$changed_tasks" | grep -q "tasks/add_debian_repo.yml"); then
-            all_playbooks="$(find playbooks/ -name '*.yml' -type f)"
-            playbooks_to_test="$playbooks_to_test $(grep --files-with-matches 'include_tasks.*tasks/add_debian_repo.yml' $all_playbooks)"
+          # List of all playbooks
+          all_playbooks="$(find playbooks/ -name '*.yml' -type f)"
+
+          # If CI or molecule conf is changed, test all playbooks; otherwise, tests only changed ones
+          if [ -n "$(git diff --name-only $range -- .github/workflows/)" ] || [ -n "$(git diff --name-only $range -- molecule/)" ]; then
+            playbooks_to_test="$all_playbooks"
+          else
+            playbooks_to_test="$(git diff --name-only $range -- playbooks/*.yml)"
+
+            # If "tasks/add_debian_repo.yml" is changed, also add playbooks that include it in the test list
+            if [ -n "$(git diff --name-only $range -- tasks/add_debian_repo.yml)" ]; then
+              playbooks_to_test="$playbooks_to_test $(grep --files-with-matches 'include_tasks.*tasks/add_debian_repo.yml' $all_playbooks)"
+            fi
           fi
 
           # Remove duplicate entries, format and convert to compact json
