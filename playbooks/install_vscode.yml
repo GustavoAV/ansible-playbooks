@@ -22,7 +22,7 @@
           URIs: https://packages.microsoft.com/repos/code
           Suites: stable
           Components: main
-          Architectures: {{ debian_dpkg_arch.stdout }}
+          Architectures: {{ debian_dpkg_architecture }}
           Signed-By: {{ debian_repo_key_path }}
       when: ansible_facts['os_family'] == "Debian"
 
