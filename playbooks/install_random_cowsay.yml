@@ -28,3 +28,4 @@
       ansible.builtin.command:
         cmd: bash -ic "echo"
       changed_when: false
+
