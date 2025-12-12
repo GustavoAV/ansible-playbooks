@@ -1,6 +1,6 @@
 ---
 - name: Setup UV
-  ansible.builtin.import_playbook: setup_uv.yml
+  ansible.builtin.import_playbook: install_uv.yml
 
 - name: Setup random cowsay
   hosts: all

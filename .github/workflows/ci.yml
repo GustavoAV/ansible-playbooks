@@ -13,18 +13,48 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Checkout the codebase
+      - name: Checkout the codebase (full history)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
-      - name: List playbooks
+      - name: List playbooks to test
         id: set-matrix
+        shell: bash
         run: |
-          # Assembles JSON array with playbooks, e.g: ["play.yml", "setup.yml"]
-          playbooks_json=$(ls *.yml \
-            | grep -v requirements.yml \
-            | jq --raw-input . \
-            | jq --compact-output --slurp .)
-          echo "matrix=$playbooks_json" >> $GITHUB_OUTPUT
+          set -euxo pipefail
+
+          # Get range of commits
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }}"
+            git fetch origin ${{ github.event.pull_request.base.ref }}
+          else
+            range="${{ github.event.before }}...${{ github.sha }}"
+          fi
+          
+          # Get changed tasks and playbooks
+          changed_tasks="$(git diff --name-only $range | grep -E "^tasks/.*\.yml$")"
+          changed_playbooks="$(git diff --name-only $range | grep -E "^playbooks/.*\.yml$")"
+          
+          # Add changed playbooks to test list
+          playbooks_to_test="$changed_playbooks"
+
+          # If "tasks/add_debian_repo.yml" is changed, also add playbooks that include it in the test list
+          if $(echo "$changed_tasks" | grep -q "tasks/add_debian_repo.yml"); then
+            all_playbooks="$(find playbooks/ -name '*.yml' -type f)"
+            playbooks_to_test="$playbooks_to_test $(grep --files-with-matches 'include_tasks.*tasks/add_debian_repo.yml' $all_playbooks)"
+          fi
+
+          # Remove duplicate entries, format and convert to compact json
+          playbooks_to_test_json="$(echo "$playbooks_to_test" \
+            | tr ' ' '\n' \
+            | sort -u \
+            | xargs \
+            | tr -d '\n' \
+            | jq -R -s -c 'split(" ")')"
+
+          # Send to GITHUB_OUTPUT
+          echo "matrix=$playbooks_to_test_json" >> $GITHUB_OUTPUT
 
   lint:
     runs-on: ubuntu-latest

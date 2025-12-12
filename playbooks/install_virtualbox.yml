@@ -8,8 +8,7 @@
 
   tasks:
     - name: Add repository (Debian)
-      ansible.builtin.include_tasks:
-        file: tasks/add_debian_repo.yml
+      ansible.builtin.include_tasks: ../tasks/add_debian_repo.yml
       vars:
         debian_repo_key_url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
         debian_repo_key_path: /usr/share/keyrings/oracle-virtualbox-2016.gpg
