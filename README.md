@@ -12,7 +12,6 @@ Repository with many Ansible playbooks.
 Requirements for the playbooks:
 
 - Operational system: Debian 11+, Ubuntu 22+, RedHat 9+
-- Internet connection
 
 ## Usage
 
@@ -49,5 +48,5 @@ molecule --version
 And then, to test a playbook:
 
 ```bash
-MOLECULE_PLAYBOOK=setup_uv.yml molecule -v test
+MOLECULE_PLAYBOOK=playbooks/install_uv.yml molecule test -- -v
 ```
