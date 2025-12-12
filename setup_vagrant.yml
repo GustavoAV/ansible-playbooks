@@ -15,8 +15,8 @@
         debian_repo_key_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
         debian_repo_filename: hashicorp
         debian_repo_list: >-
-          deb [arch={{ debian_dpkg_arch.stdout }} signed-by={{ debian_repo_key_path }}]
-          https://apt.releases.hashicorp.com {{ debian_distro_codename.stdout }} main
+          deb [arch={{ debian_dpkg_architecture }} signed-by={{ debian_repo_key_path }}]
+          https://apt.releases.hashicorp.com {{ debian_distro_codename }} main
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Add repository (RedHat)

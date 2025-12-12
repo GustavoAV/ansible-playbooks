@@ -5,16 +5,17 @@
 #   vars:
 #     debian_repo_key_url: https://example.com/download/key.asc
 #     debian_repo_key_path: /usr/share/keyrings/example-key.gpg
+#     # The file created is "/etc/apt/sources.list.d/{{ debian_repo_filename }}.[list|sources]"
 #     debian_repo_filename: example-repo
 #     debian_repo_list: >-
-#       deb [arch={{ debian_dpkg_arch.stdout }} signed-by={{ debian_repo_key_path }}]
-#       https://download.example.com/repo/debian {{ debian_distro_codename.stdout }} main
+#       deb [arch={{ debian_dpkg_architecture }} signed-by={{ debian_repo_key_path }}]
+#       https://download.example.com/repo/debian {{ debian_distro_codename }} main
 #     debian_repo_sources: |-
 #       Types: deb
 #       URIs: https://download.example.com/repo/debian
-#       Suites: {{ debian_distro_codename.stdout }}
+#       Suites: {{ debian_distro_codename }}
 #       Components: main
-#       Architectures: {{ debian_dpkg_arch.stdout }}
+#       Architectures: {{ debian_dpkg_architecture }}
 #       Signed-By: {{ debian_repo_key_path }}
 #   when: ansible_facts['os_family'] == "Debian"
 ---
@@ -22,14 +23,19 @@
   ansible.builtin.command:
     cmd: dpkg --print-architecture
   changed_when: false
-  register: debian_dpkg_arch
+  register: debian_dpkg_architecture_command
 
 # Gets the proper codename even when running on Ubuntu based (e.g. Linux Mint)
 - name: Debian repo | Gets distro codename
   ansible.builtin.shell:
     cmd: . /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}"
   changed_when: false
-  register: debian_distro_codename
+  register: debian_distro_codename_command
+
+- name: Debian repo | Set facts with distro info
+  ansible.builtin.set_fact:
+    debian_dpkg_architecture: "{{ debian_dpkg_architecture_command.stdout }}"
+    debian_distro_codename: "{{ debian_distro_codename_command.stdout }}"
 
 - name: Debian repo | Install dependencies
   ansible.builtin.apt:
@@ -54,8 +60,8 @@
   ansible.builtin.shell:
     cmd: set -o pipefail &&
       wget -O- {{ debian_repo_key_url }} | gpg --yes --output {{ debian_repo_key_path }} --dearmor
-    creates: "{{ debian_repo_key_path }}"
     executable: /bin/bash
+    creates: "{{ debian_repo_key_path }}"
 
 - name: Debian repo | Add repository (line format)
   ansible.builtin.apt_repository:

@@ -15,8 +15,8 @@
         debian_repo_key_path: /usr/share/keyrings/oracle-virtualbox-2016.gpg
         debian_repo_filename: oracle-virtualbox
         debian_repo_list: >-
-          deb [arch={{ debian_dpkg_arch.stdout }} signed-by={{ debian_repo_key_path }}]
-          https://download.virtualbox.org/virtualbox/debian {{ debian_distro_codename.stdout }} contrib
+          deb [arch={{ debian_dpkg_architecture }} signed-by={{ debian_repo_key_path }}]
+          https://download.virtualbox.org/virtualbox/debian {{ debian_distro_codename }} contrib
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Add repository (RedHat)

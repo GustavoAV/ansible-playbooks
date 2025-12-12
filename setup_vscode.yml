@@ -14,7 +14,7 @@
         debian_repo_key_url: https://packages.microsoft.com/keys/microsoft.asc
         debian_repo_key_path: /usr/share/keyrings/microsoft.gpg
         debian_repo_filename: vscode
-        # Not writing those two comments breaks idempotence
+        # Writing those comments (first two lines) avoids breaking idempotence in tests
         # https://github.com/microsoft/vscode/blob/87e50c657dd06bb5590a881a92eff80b174c5364/resources/linux/debian/postinst.template#L90C8-L91C75
         debian_repo_sources: |
           ### THIS FILE IS AUTOMATICALLY CONFIGURED ###
