@@ -45,6 +45,11 @@ jobs:
             if [ -n "$(git diff --name-only $range -- tasks/add_debian_repo.yml)" ]; then
               playbooks_to_test="$playbooks_to_test $(grep --files-with-matches 'include_tasks.*tasks/add_debian_repo.yml' $all_playbooks)"
             fi
+
+            # If "tasks/add_asdf_plugins_and_tools.yml" is changed, also add playbooks that include it in the test list
+            if [ -n "$(git diff --name-only $range -- tasks/add_asdf_plugins_and_tools.yml)" ]; then
+              playbooks_to_test="$playbooks_to_test $(grep --files-with-matches 'include_tasks.*tasks/add_asdf_plugins_and_tools.yml' $all_playbooks)"
+            fi
           fi
 
           # Remove duplicate entries, format and convert to compact json

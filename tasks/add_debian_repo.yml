@@ -1,7 +1,6 @@
 ## Usage:
 # - name: Add repository (Debian)
-#   ansible.builtin.include_tasks:
-#     file: tasks/add_debian_repo.yml
+#   ansible.builtin.include_tasks: ../tasks/add_debian_repo.yml
 #   vars:
 #     debian_repo_key_url: https://example.com/download/key.asc
 #     debian_repo_key_path: /usr/share/keyrings/example-key.gpg

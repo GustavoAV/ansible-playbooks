@@ -1,0 +1,58 @@
+# Based on: https://asdf-vm.com/guide/getting-started.html
+---
+- name: Install asdf
+  hosts: all
+  vars:
+    asdf_version: v0.18.0
+    asdf_configure_bash_completion: false
+
+  tasks:
+    - name: Install system dependencies (Debian)
+      ansible.builtin.apt:
+        name: [bash, curl, git]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install system dependencies (RedHat)
+      ansible.builtin.dnf:
+        name: [bash, curl, git]
+        state: present
+        update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Download archive
+      ansible.builtin.get_url:
+        url: https://github.com/asdf-vm/asdf/releases/download/{{ asdf_version }}/asdf-{{ asdf_version }}-linux-amd64.tar.gz
+        dest: /tmp/
+        mode: "0644"
+      register: asdf_archive_download
+
+    - name: Extract archive
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "{{ asdf_archive_download.dest }}"
+        dest: /usr/local/bin/
+        mode: "0755"
+      become: true
+
+    - name: Validate install
+      ansible.builtin.command:
+        cmd: asdf --version
+      changed_when: false
+
+    - name: Configure PATH
+      ansible.builtin.lineinfile:
+        line: export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+        path: ~/.bashrc
+        state: present
+
+    - name: Configure bash completion
+      ansible.builtin.lineinfile:
+        line: . <(asdf completion bash)
+        path: ~/.bashrc
+        state: present
+      when: asdf_configure_bash_completion is truthy

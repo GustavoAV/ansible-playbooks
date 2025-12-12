@@ -1,0 +1,32 @@
+## Usage
+# tasks:
+#   - name: Install tool via asdf
+#     ansible.builtin.include_tasks: ../tasks/add_asdf_plugins_and_tools.yml
+#     vars:
+#       asdf_tool_name: example
+#       asdf_tool_version: latest
+#       asdf_plugin_url: <plugin from https://github.com/asdf-vm/asdf-plugins?tab=readme-ov-file#plugin-list>
+#       asdf_validate_command: example --version
+
+---
+- name: Install asdf plugins
+  ansible.builtin.command:
+    cmd: asdf plugin add {{ asdf_tool_name }} {{ asdf_plugin_url }}
+    creates: ~/.asdf/plugins/{{ asdf_tool_name }}/
+
+- name: Install tool
+  ansible.builtin.command:
+    cmd: asdf install {{ asdf_tool_name }} {{ asdf_tool_version }}
+    creates: ~/.asdf/shims/{{ asdf_tool_name }}
+
+# This returns error (exit code 1) for some tools, but works properly
+- name: Set tool version in home dir # noqa: ignore-errors
+  ansible.builtin.command:
+    cmd: asdf set --home {{ asdf_tool_name }} {{ asdf_tool_version }}
+  changed_when: false
+  ignore_errors: true
+
+- name: Validate tool install
+  ansible.builtin.command:
+    cmd: bash -eic "{{ asdf_validate_command }}"
+  changed_when: false
