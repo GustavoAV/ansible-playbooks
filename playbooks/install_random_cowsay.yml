@@ -18,7 +18,7 @@
         - package_name: lolcat
           installed_binary: lolcat
 
-    - name: Configure command in ~/.bashrc
+    - name: Configure command in  ~/.bashrc
       ansible.builtin.lineinfile:
         line: cowsay --random "$(fortune)" | lolcat
         path: ~/.bashrc

@@ -73,7 +73,7 @@
     - debian_repo_list is defined
     - debian_repo_list | length > 0
 
-- name: Debian repo | Add repository (deb822 format)
+- name: Debian repo | Add repository  (deb822 format)
   ansible.builtin.copy:
     content: "{{ debian_repo_sources }}"
     dest: /etc/apt/sources.list.d/{{ debian_repo_filename }}.sources
