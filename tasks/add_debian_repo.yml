@@ -83,4 +83,3 @@
   when:
     - debian_repo_sources is defined
     - debian_repo_sources | length > 0
-
