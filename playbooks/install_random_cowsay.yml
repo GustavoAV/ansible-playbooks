@@ -28,8 +28,3 @@
       ansible.builtin.command:
         cmd: bash -ic "echo"
       changed_when: false
-      register: random_cowsay_validate
-
-    - name: Show command output
-      ansible.builtin.debug:
-        var: random_cowsay_validate.stdout_lines
