@@ -1,0 +1,44 @@
+# Based on: https://brave.com/linux/
+---
+- name: Setup Brave Browser
+  hosts: all
+  become: true
+  tasks:
+    - name: Add repository (Debian)
+      ansible.builtin.include_tasks: ../tasks/add_debian_repo.yml
+      vars:
+        debian_repo_key_url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+        debian_repo_key_path: /usr/share/keyrings/brave-browser-archive-keyring.gpg
+        debian_repo_key_dearmor: false
+        debian_repo_filename: brave-browser
+        debian_repo_sources: |-
+          Types: deb
+          URIs: https://brave-browser-apt-release.s3.brave.com
+          Suites: stable
+          Components: main
+          Architectures: {{ debian_dpkg_architecture }}
+          Signed-By: {{ debian_repo_key_path }}
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Add repository (RedHat)
+      ansible.builtin.get_url:
+        url: https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+        dest: /etc/yum.repos.d/brave-browser.repo
+        mode: "0644"
+        owner: root
+        group: root
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Install Brave (Debian)
+      ansible.builtin.apt:
+        name: brave-browser
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install Brave (RedHat)
+      ansible.builtin.dnf:
+        name: brave-browser
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "RedHat"

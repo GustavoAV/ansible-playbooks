@@ -4,6 +4,7 @@
 #   vars:
 #     debian_repo_key_url: https://example.com/download/key.asc
 #     debian_repo_key_path: /usr/share/keyrings/example-key.gpg
+#     debian_repo_key_dearmor: true (optional)
 #     # The file created is "/etc/apt/sources.list.d/{{ debian_repo_filename }}.[list|sources]"
 #     debian_repo_filename: example-repo
 #     debian_repo_list: >-
@@ -58,10 +59,17 @@
 
 - name: Debian repo | Download and register key
   ansible.builtin.shell:
-    cmd: set -o pipefail &&
+    cmd: |-
+      {%- if debian_repo_key_dearmor -%}
+      set -o pipefail
       wget -O- {{ debian_repo_key_url }} | gpg --yes --output {{ debian_repo_key_path }} --dearmor
+      {%- else -%}
+      wget -O {{ debian_repo_key_path }} {{ debian_repo_key_url }}
+      {%- endif -%}
     executable: /bin/bash
     creates: "{{ debian_repo_key_path }}"
+  vars:
+    debian_repo_key_dearmor: true
 
 - name: Debian repo | Add repository (line format)
   ansible.builtin.apt_repository:

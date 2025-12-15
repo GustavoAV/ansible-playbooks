@@ -1,0 +1,49 @@
+---
+- name: Setup Git
+  hosts: all
+  vars:
+    git_user_name: User
+    git_user_email: user@example.com
+
+  tasks:
+    - name: Install git (Debian)
+      ansible.builtin.apt:
+        name: git
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install git (RedHat)
+      ansible.builtin.dnf:
+        name: git
+        state: present
+        update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Add bash git aliases
+      ansible.builtin.lineinfile:
+        line: alias g='git'
+        path: ~/.bashrc
+        state: present
+
+    - name: Git user configuration
+      ansible.builtin.copy:
+        content: |
+          [user]
+            name = {{ git_user_name }}
+            email = {{ git_user_email }}
+          # Based on: https://opensource.com/article/20/11/git-aliases
+          [alias]
+            cm = commit -m
+            dv = difftool -t vimdiff -y
+            gl = config --global -l
+            last = log -1 HEAD --stat
+            ll = log --oneline
+            st = status -sb
+          [credential]
+            helper = cache
+        dest: ~/.gitconfig
+        mode: "0664"
