@@ -5,26 +5,42 @@
 - name: Setup K8S tools
   hosts: all
   tasks:
-    - name: Install with asdf - {{ item.asdf_tool_name }}
+    - name: Install with asdf - crane
       ansible.builtin.include_tasks: ../tasks/add_asdf_plugins_and_tools.yml
-      loop:
-        - asdf_tool_name: crane
-          asdf_tool_version: latest
-          asdf_plugin_url: https://github.com/dmpe/asdf-crane.git
-          asdf_validate_command: crane version
-        - asdf_tool_name: helm
-          asdf_tool_version: latest
-          asdf_plugin_url: https://github.com/Antiarchitect/asdf-helm.git
-          asdf_validate_command: helm version --short
-        - asdf_tool_name: kubectl
-          asdf_tool_version: latest
-          asdf_plugin_url: https://github.com/asdf-community/asdf-kubectl.git
-          asdf_validate_command: kubectl version --client
-        - asdf_tool_name: minikube
-          asdf_tool_version: latest
-          asdf_plugin_url: https://github.com/alvarobp/asdf-minikube.git
-          asdf_validate_command: minikube version --short
-        - asdf_tool_name: yq
-          asdf_tool_version: latest
-          asdf_plugin_url: https://github.com/sudermanjr/asdf-yq.git
-          asdf_validate_command: yq --version
+      vars:
+        asdf_tool_name: crane
+        asdf_tool_version: latest
+        asdf_plugin_url: https://github.com/dmpe/asdf-crane.git
+        asdf_validate_command: crane version
+
+    - name: Install with asdf - helm
+      ansible.builtin.include_tasks: ../tasks/add_asdf_plugins_and_tools.yml
+      vars:
+        asdf_tool_name: helm
+        asdf_tool_version: latest
+        asdf_plugin_url: https://github.com/Antiarchitect/asdf-helm.git
+        asdf_validate_command: helm version --short
+
+    - name: Install with asdf - kubectl
+      ansible.builtin.include_tasks: ../tasks/add_asdf_plugins_and_tools.yml
+      vars:
+        asdf_tool_name: kubectl
+        asdf_tool_version: latest
+        asdf_plugin_url: https://github.com/asdf-community/asdf-kubectl.git
+        asdf_validate_command: kubectl version --client
+
+    - name: Install with asdf - minikube
+      ansible.builtin.include_tasks: ../tasks/add_asdf_plugins_and_tools.yml
+      vars:
+        asdf_tool_name: minikube
+        asdf_tool_version: latest
+        asdf_plugin_url: https://github.com/alvarobp/asdf-minikube.git
+        asdf_validate_command: minikube version --short
+
+    - name: Install with asdf - yq
+      ansible.builtin.include_tasks: ../tasks/add_asdf_plugins_and_tools.yml
+      vars:
+        asdf_tool_name: yq
+        asdf_tool_version: latest
+        asdf_plugin_url: https://github.com/sudermanjr/asdf-yq.git
+        asdf_validate_command: yq --version
