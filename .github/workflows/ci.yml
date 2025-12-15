@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    # Runs at 07:00 on Monday
+    - cron: "0 7 * * 1"
 
 permissions: read-all
 
