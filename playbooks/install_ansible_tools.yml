@@ -1,0 +1,47 @@
+---
+- name: Setup UV
+  ansible.builtin.import_playbook: install_uv.yml
+
+- name: Setup Ansible tools
+  hosts: all
+  gather_facts: false
+  vars:
+    ansible_configure_bash_completion: false
+    molecule_configure_bash_completion: false
+
+  tasks:
+    - name: Install Ansible tools
+      ansible.builtin.command:
+        cmd: ~/.local/bin/uv tool install ansible
+          --with-executables-from ansible-core,ansible-lint,molecule,argcomplete
+          --with argcomplete,docker,molecule-plugins[docker]
+        creates: ~/.local/bin/ansible
+
+    - name: Validate install
+      ansible.builtin.command:
+        cmd: bash -eic "{{ item }} --version"
+      changed_when: false
+      loop: [ansible, ansible-lint, molecule]
+
+    - name: Configure Ansible bash completion
+      ansible.builtin.lineinfile:
+        line: "{{ item }}"
+        path: ~/.bashrc
+        state: present
+      loop:
+        - eval "$(register-python-argcomplete ansible)"
+        - eval "$(register-python-argcomplete ansible-playbook)"
+        - eval "$(register-python-argcomplete ansible-config)"
+        - eval "$(register-python-argcomplete ansible-doc)"
+        - eval "$(register-python-argcomplete ansible-galaxy)"
+        - eval "$(register-python-argcomplete ansible-inventory)"
+        - eval "$(register-python-argcomplete ansible-pull)"
+        - eval "$(register-python-argcomplete ansible-vault)"
+      when: ansible_configure_bash_completion is truthy
+
+    - name: Configure Molecule bash completion
+      ansible.builtin.lineinfile:
+        line: eval "$(_MOLECULE_COMPLETE=bash_source molecule)"
+        path: ~/.bashrc
+        state: present
+      when: molecule_configure_bash_completion is truthy
