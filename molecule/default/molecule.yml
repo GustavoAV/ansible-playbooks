@@ -7,13 +7,6 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: playbooks-deb11
-    image: geerlingguy/docker-debian11-ansible:latest
-    command: ${MOLECULE_DOCKER_COMMAND:-""}
-    volumes: [/sys/fs/cgroup:/sys/fs/cgroup:rw]
-    cgroupns_mode: host
-    privileged: true
-    pre_build_image: true
   - name: playbooks-deb12
     image: geerlingguy/docker-debian12-ansible:latest
     command: ${MOLECULE_DOCKER_COMMAND:-""}
@@ -51,6 +44,20 @@ platforms:
     pre_build_image: true
   - name: playbooks-rl10
     image: geerlingguy/docker-rockylinux10-ansible:latest
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes: [/sys/fs/cgroup:/sys/fs/cgroup:rw]
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+  - name: playbooks-fed42
+    image: geerlingguy/docker-fedora42-ansible:latest
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes: [/sys/fs/cgroup:/sys/fs/cgroup:rw]
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+  - name: playbooks-fed43
+    image: geerlingguy/docker-fedora44-ansible:latest
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes: [/sys/fs/cgroup:/sys/fs/cgroup:rw]
     cgroupns_mode: host
