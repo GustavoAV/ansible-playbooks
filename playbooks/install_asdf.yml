@@ -18,7 +18,9 @@
 
     - name: Install system dependencies (RedHat)
       ansible.builtin.dnf:
-        name: [bash, curl, git]
+        # Installing "curl-minimal" instead of "curl" avoids error in RedHat 9
+        # https://github.com/ansible/ansible/issues/82461
+        name: [bash, curl-minimal, git]
         state: present
         update_cache: true
       become: true
