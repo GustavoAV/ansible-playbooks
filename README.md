@@ -11,7 +11,7 @@ Repository with many Ansible playbooks.
 
 Requirements for the playbooks:
 
-- Operational system: Debian 11+, Ubuntu 22+, RedHat 9+
+- Operational system: Debian 12+, Ubuntu 22+, Fedora 43+, RedHat 9+
 
 ## Usage
 
@@ -21,7 +21,7 @@ Clone this project and apply a playbook using your inventory file
 git clone https://github.com/GustavoAV/ansible-playbooks.git
 cd ansible-playbooks/
 
-ansible-playbook -i inventory setup_uv.yml
+ansible-playbook -i inventory playbooks/install_uv.yml
 ```
 
 ## Development
