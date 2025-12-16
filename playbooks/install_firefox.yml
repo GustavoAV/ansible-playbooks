@@ -1,0 +1,51 @@
+# Based on: https://support.mozilla.org/pt-BR/kb/instale-o-firefox-no-linux#w_install-firefox-deb-package-for-debian-based-distributions
+---
+- name: Setup Firefox
+  hosts: all
+  become: true
+  vars:
+    firefox_debian_prefer_mozilla_repository: true
+
+  tasks:
+    - name: Add repository (Debian)
+      ansible.builtin.include_tasks: ../tasks/add_debian_repo.yml
+      vars:
+        debian_repo_key_url: https://packages.mozilla.org/apt/repo-signing-key.gpg
+        debian_repo_key_path: /etc/apt/keyrings/packages.mozilla.org.asc
+        debian_repo_key_dearmor: false
+        debian_repo_filename: mozilla
+        debian_repo_sources: |-
+          Types: deb
+          URIs: https://packages.mozilla.org/apt
+          Suites: mozilla
+          Components: main
+          Signed-By: {{ debian_repo_key_path }}
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Configure repository preference (Debian)
+      ansible.builtin.copy:
+        content: |
+          Package: *
+          Pin: origin packages.mozilla.org
+          Pin-Priority: 1000
+        dest: /etc/apt/preferences.d/mozilla
+        mode: "0644"
+        owner: root
+        group: root
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - firefox_debian_prefer_mozilla_repository is truthy
+
+    - name: Install Firefox (Debian)
+      ansible.builtin.apt:
+        name: firefox
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install Firefox (RedHat)
+      ansible.builtin.dnf:
+        name: firefox
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "RedHat"
