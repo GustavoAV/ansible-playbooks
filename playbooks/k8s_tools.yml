@@ -1,6 +1,6 @@
 ---
 - name: Install asdf
-  ansible.builtin.import_playbook: install_asdf.yml
+  ansible.builtin.import_playbook: asdf.yml
 
 - name: Setup K8S tools
   hosts: all

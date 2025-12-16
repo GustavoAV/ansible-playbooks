@@ -1,6 +1,6 @@
 ---
 - name: Setup UV
-  ansible.builtin.import_playbook: install_uv.yml
+  ansible.builtin.import_playbook: uv.yml
 
 - name: Setup Ansible tools
   hosts: all
