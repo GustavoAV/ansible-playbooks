@@ -1,0 +1,30 @@
+## Usage
+# tasks:
+#   - name: Edit json file
+#     ansible.builtin.include_tasks: ../tasks/edit_json.yml
+#     vars:
+#       json_content_override: |
+#         { "foo": "Fighters" }
+#       json_file_path: /opt/example/conf.json
+#       json_file_mode: "0664"
+#       json_show_diff: true (optional)
+# Based on: https://stackoverflow.com/a/50796673
+
+---
+- name: Load var from json file
+  ansible.builtin.slurp:
+    src: "{{ json_file_path }}"
+  register: json_file_var
+
+- name: Edit json content
+  ansible.builtin.set_fact:
+    json_content_merged: "{{ json_file_var.content | b64decode | combine(json_content_override | from_json, recursive=True) }}"
+
+- name: Write content to json file
+  ansible.builtin.copy:
+    content: "{{ json_content_merged | to_nice_json(indent=2) }}"
+    dest: "{{ json_file_path }}"
+    mode: "{{ json_file_mode }}"
+  diff: "{{ json_show_diff }}"
+  vars:
+    json_show_diff: true

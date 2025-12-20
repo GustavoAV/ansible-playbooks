@@ -1,0 +1,70 @@
+# Based on: https://ohmypo.sh/docs/installation/linux
+---
+- name: Setup OhMyPosh
+  hosts: all
+  vars:
+    ohmyposh_bin_path: ~/.local/bin/oh-my-posh
+    ohmyposh_vscode_settings_json: ~/.config/Code/User/settings.json
+    ohmyposh_theme: amro
+
+  tasks:
+    - name: Install dependencies (Debian)
+      ansible.builtin.apt:
+        name: [bash, curl, unzip]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install dependencies (RedHat)
+      ansible.builtin.dnf:
+        name: [bash, curl-minimal, unzip]
+        state: present
+        update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Create directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0775"
+      loop:
+        - "{{ ohmyposh_bin_path | dirname }}"
+        - "{{ ohmyposh_vscode_settings_json | dirname }}"
+
+    - name: Install OhMyPosh
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          curl -s https://ohmyposh.dev/install.sh | bash -s -- -d {{ ohmyposh_bin_path | dirname }}/
+        executable: /bin/bash
+        creates: "{{ ohmyposh_bin_path }}"
+
+    - name: Install fonts
+      ansible.builtin.command:
+        cmd: "{{ ohmyposh_bin_path }} font install meslo --plain --trace"
+        creates: ~/.local/share/fonts/meslolgm-nerd-font/
+
+    - name: Create empty VSCode config file (if absent)
+      ansible.builtin.copy:
+        content: "{}"
+        dest: "{{ ohmyposh_vscode_settings_json }}"
+        mode: "0664"
+        force: false
+
+    - name: Edit VSCode config file
+      ansible.builtin.include_tasks: ../tasks/edit_json.yml
+      vars:
+        json_content_override: '{ "terminal.integrated.fontFamily": "MesloLGM Nerd Font" }'
+        json_file_path: "{{ ohmyposh_vscode_settings_json }}"
+        json_file_mode: "0664"
+        json_show_diff: true
+
+    - name: Configure OhMyPosh in bashrc last line
+      ansible.builtin.lineinfile:
+        line: eval "$(oh-my-posh init bash --config ~/.cache/oh-my-posh/themes/{{ ohmyposh_theme }}.omp.json)"
+        path: ~/.bashrc
+        state: present
+        insertafter: EOF
