@@ -78,15 +78,6 @@ jobs:
       fail-fast: false
       matrix:
         playbook: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
-        distro:
-          - debian12
-          - debian13
-          - ubuntu2204
-          - ubuntu2404
-          - rockylinux9
-          - rockylinux10
-          - fedora42
-          - fedora43
     steps:
       - name: Checkout the codebase
         uses: actions/checkout@v4
@@ -106,6 +97,5 @@ jobs:
         run: molecule test -- --diff -v
         env:
           MOLECULE_PLAYBOOK: ${{ matrix.playbook }}
-          MOLECULE_DISTRO: ${{ matrix.distro }}
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
