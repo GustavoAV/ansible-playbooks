@@ -1,9 +1,11 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches: [main]
+    paths-ignore: &paths-ignore [.gitignore, LICENSE, "*.md"]
+  pull_request:
+    paths-ignore: *paths-ignore
   schedule:
     # Runs at 07:00 on Monday
     - cron: "0 7 * * 1"
@@ -23,47 +25,29 @@ jobs:
       
       - name: List playbooks to test
         id: set-matrix
-        shell: bash
         run: |
-          set -euxo pipefail
-
           # Get range of commits
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            range="origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }}"
+            commit_range="origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }}"
             git fetch origin ${{ github.event.pull_request.base.ref }}
           else
-            range="${{ github.event.before }}...${{ github.sha }}"
+            commit_range="${{ github.event.before }}...${{ github.sha }}"
           fi
 
-          # List of all playbooks
-          all_playbooks="$(find playbooks/ -name '*.yml' -type f)"
+          # Returns 0 if arguments (paths or files) are changed; 1, otherwise
+          is_changed() {
+            git diff --quiet --exit-code $commit_range -- $@ && return 1 || return 0
+          }
 
-          # If CI or molecule conf is changed, test all playbooks; otherwise, tests only changed ones
-          if [ -n "$(git diff --name-only $range -- .github/workflows/)" ] || [ -n "$(git diff --name-only $range -- molecule/)" ]; then
-            playbooks_to_test="$all_playbooks"
+          # If specific dirs are changed, test all playbooks; otherwise, test only specific ones
+          if is_changed .github/ molecule/; then
+            playbooks_to_test="$(find playbooks/ -name '*.yml' -type f)"
           else
-            playbooks_to_test="$(git diff --name-only $range -- playbooks/*.yml)"
-
-            # If "tasks/add_debian_repo.yml" is changed, also add playbooks that include it in the test list
-            if [ -n "$(git diff --name-only $range -- tasks/add_debian_repo.yml)" ]; then
-              playbooks_to_test="$playbooks_to_test $(grep --files-with-matches 'include_tasks.*tasks/add_debian_repo.yml' $all_playbooks)"
-            fi
-
-            # If "tasks/add_asdf_plugins_and_tools.yml" is changed, also add playbooks that include it in the test list
-            if [ -n "$(git diff --name-only $range -- tasks/add_asdf_plugins_and_tools.yml)" ]; then
-              playbooks_to_test="$playbooks_to_test $(grep --files-with-matches 'include_tasks.*tasks/add_asdf_plugins_and_tools.yml' $all_playbooks)"
-            fi
+            playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh $commit_range)"
           fi
 
-          # Remove duplicate entries, format and convert to compact json
-          playbooks_to_test_json="$(echo "$playbooks_to_test" \
-            | tr ' ' '\n' \
-            | sort -u \
-            | xargs \
-            | tr -d '\n' \
-            | jq -R -s -c 'split(" ")')"
-
-          # Send to GITHUB_OUTPUT
+          # Convert list to json and send to GITHUB_OUTPUT
+          playbooks_to_test_json="$(echo "$playbooks_to_test" | yq 'split(" ")' -o=json | yq)"
           echo "matrix=$playbooks_to_test_json" >> $GITHUB_OUTPUT
 
   lint:
@@ -110,7 +94,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run Molecule tests
-        run: MOLECULE_PLAYBOOK=${{ matrix.playbook }} molecule test -- --diff -v
+        run: molecule test -- --diff -v
         env:
+          MOLECULE_PLAYBOOK: ${{ matrix.playbook }}
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
