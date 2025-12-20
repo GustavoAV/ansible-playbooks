@@ -34,17 +34,8 @@ jobs:
             commit_range="${{ github.event.before }}...${{ github.sha }}"
           fi
 
-          # Returns 0 if arguments (paths or files) are changed; 1, otherwise
-          is_changed() {
-            git diff --quiet --exit-code $commit_range -- $@ && return 1 || return 0
-          }
-
-          # If specific dirs are changed, test all playbooks; otherwise, test only specific ones
-          if is_changed .github/ molecule/; then
-            playbooks_to_test="$(find playbooks/ -name '*.yml' -type f)"
-          else
-            playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh $commit_range)"
-          fi
+          # Get list of playbooks that need to be tested
+          playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh $commit_range)"
 
           # Convert list to json and send to GITHUB_OUTPUT
           playbooks_to_test_json="$(echo "$playbooks_to_test" | yq 'split(" ")' -o=json | yq)"
