@@ -26,16 +26,22 @@ jobs:
       - name: List playbooks to test
         id: set-matrix
         run: |
-          # Get range of commits
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            commit_range="origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }}"
-            git fetch origin ${{ github.event.pull_request.base.ref }}
+          # List all playbooks if schedule (weekly)
+          # Otherwise, list only specific ones
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            playbooks_to_test="$(find playbooks/ -name '*.yml' -type f)"
           else
-            commit_range="${{ github.event.before }}...${{ github.sha }}"
+            # Get range of commits
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              commit_range="origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }}"
+              git fetch origin ${{ github.event.pull_request.base.ref }}
+            else
+              commit_range="${{ github.event.before }}...${{ github.sha }}"
+            fi
+            playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh "$commit_range")"
           fi
 
-          # Get list of playbooks that need to be tested and converts to json
-          playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh "$commit_range")"
+          # Convert list to json
           playbooks_to_test_json="$(echo "$playbooks_to_test" | yq 'split(" ")' -o json | yq)"
 
           echo "matrix=$playbooks_to_test_json" >> $GITHUB_OUTPUT
