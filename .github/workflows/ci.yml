@@ -34,15 +34,9 @@ jobs:
             commit_range="${{ github.event.before }}...${{ github.sha }}"
           fi
 
-          # Get list of playbooks that need to be tested
+          # Get list of playbooks that need to be tested and converts to json
           playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh "$commit_range")"
-
-          # Converts list to json (creates an empty array if there's nothing to test)
-          if [[ "$playbooks_to_test" == "" ]]; then
-            playbooks_to_test_json="[]"
-          else
-            playbooks_to_test_json="$(echo "$playbooks_to_test" | yq 'split(" ")' -o json | yq)"
-          fi
+          playbooks_to_test_json="$(echo "$playbooks_to_test" | yq 'split(" ")' -o json | yq)"
 
           echo "matrix=$playbooks_to_test_json" >> $GITHUB_OUTPUT
 
@@ -67,6 +61,7 @@ jobs:
           FORCE_COLOR: "1"
 
   molecule:
+    if: ${{ needs.generate-matrix.outputs.matrix != '[]' && needs.generate-matrix.outputs.matrix != '' }}
     needs: [generate-matrix, lint]
     runs-on: ubuntu-latest
     strategy:
