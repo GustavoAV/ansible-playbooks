@@ -35,10 +35,11 @@ jobs:
           fi
 
           # Get list of playbooks that need to be tested
-          playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh $commit_range)"
+          playbooks_to_test="$(.github/workflows/list_playbooks_to_test.sh "$commit_range")"
 
-          # Convert list to json and send to GITHUB_OUTPUT
-          playbooks_to_test_json="$(echo "$playbooks_to_test" | yq 'split(" ")' -o=json | yq)"
+          # Convert list to json
+          playbooks_to_test_json="$(echo "$playbooks_to_test" | yq 'split(" ")' -o json | yq)"
+
           echo "matrix=$playbooks_to_test_json" >> $GITHUB_OUTPUT
 
   lint:

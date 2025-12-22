@@ -1,6 +1,6 @@
 # Ansible Playbooks
 
-Repository with many Ansible playbooks.
+Repository with some Ansible playbooks.
 
 - [Ansible Playbooks](#ansible-playbooks)
   - [Requirements](#requirements)
@@ -11,7 +11,7 @@ Repository with many Ansible playbooks.
 
 Requirements for the playbooks:
 
-- Operational system: Debian 12+, Ubuntu 22+, Fedora 43+, RedHat 9+
+- Operational system: Debian 12+, Ubuntu 22+, Fedora 43+ or RedHat 9+
 
 ## Usage
 
@@ -21,7 +21,7 @@ Clone this project and apply a playbook using your inventory file
 git clone https://github.com/GustavoAV/ansible-playbooks.git
 cd ansible-playbooks/
 
-ansible-playbook -i inventory playbooks/install_uv.yml
+ansible-playbook -i inventory playbooks/uv.yml
 ```
 
 ## Development
@@ -48,5 +48,5 @@ molecule --version
 And then, to test a playbook:
 
 ```bash
-MOLECULE_PLAYBOOK=playbooks/install_uv.yml molecule test -- -v
+MOLECULE_PLAYBOOK=playbooks/uv.yml molecule test -- -v
 ```
