@@ -1,0 +1,67 @@
+# Based on: https://github.com/moovweb/gvm?tab=readme-ov-file#installing
+---
+- name: Setup gvm
+  hosts: all
+  vars:
+    gvm_bin_path: ~/.gvm/bin/gvm
+    gvm_go_version: go1.25.5
+
+  tasks:
+    - name: Install dependencies (Debian)
+      ansible.builtin.apt:
+        name:
+          - bash
+          - binutils
+          - bison
+          - build-essential
+          - bsdmainutils  # Has command "hexdump"
+          - curl
+          - gcc
+          - git
+          - make
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install dependencies (RedHat)
+      ansible.builtin.dnf:
+        name:
+          - bash
+          - bison
+          - curl-minimal
+          - gcc
+          - git
+          - glibc-devel
+          - make
+          - util-linux-ng  # Has command "hexdump"
+        state: present
+        update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Install gvm
+      ansible.builtin.shell:
+        cmd: bash -c "$(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)"
+        creates: "{{ gvm_bin_path }}"
+
+    - name: Validate gvm install
+      ansible.builtin.command:
+        cmd: bash -ic 'gvm version'
+      changed_when: false
+
+    - name: Install go (binary)
+      ansible.builtin.command:
+        cmd: bash -ic 'gvm install {{ gvm_go_version }} --binary'
+        creates: ~/.gvm/gos/{{ gvm_go_version }}/bin/go
+
+    - name: Set default go version
+      ansible.builtin.command:
+        cmd: bash -ic 'gvm use {{ gvm_go_version }} --default'
+      changed_when: false
+
+    - name: Validate go install
+      ansible.builtin.command:
+        cmd: bash -ic "go version"
+      changed_when: false
