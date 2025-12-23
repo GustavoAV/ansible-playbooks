@@ -46,6 +46,12 @@
         cmd: bash -c "$(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)"
         creates: "{{ gvm_bin_path }}"
 
+    - name: Remove "cd" override since it's broken (https://github.com/moovweb/gvm/issues/457)
+      ansible.builtin.lineinfile:
+        line: . "$GVM_ROOT/scripts/env/cd" && cd .
+        path: ~/.gvm/scripts/gvm-default
+        state: absent
+
     - name: Validate gvm install
       ansible.builtin.command:
         cmd: bash -ic 'gvm version'
