@@ -1,0 +1,60 @@
+# https://github.com/voidint/g
+---
+- name: Setup G (Go Version Manager)
+  hosts: all
+  vars:
+    g_use_go_version: 1.25.5
+    g_install_go_versions: ["{{ g_use_go_version }}"]
+
+  tasks:
+    - name: Install dependencies (Debian)
+      ansible.builtin.apt:
+        name: [bash, curl]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install dependencies (RedHat)
+      ansible.builtin.dnf:
+        name: [bash, curl-minimal]
+        state: present
+        update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Install G
+      ansible.builtin.shell:
+        cmd: bash -c "$(curl -sSL https://raw.githubusercontent.com/voidint/g/master/install.sh)"
+        creates: ~/.g/bin/g
+
+    # Many people already use "g" as alias for "git"
+    - name: Create "gvm" alias
+      ansible.builtin.lineinfile:
+        line: alias gvm="command g"
+        path: ~/.bashrc
+        state: present
+
+    - name: Validate g install
+      ansible.builtin.command:
+        cmd: bash -ic "gvm --version"
+      changed_when: false
+
+    - name: Install go versions
+      ansible.builtin.command:
+        cmd: bash -ic "gvm install {{ item }}"
+        creates: ~/.g/versions/{{ item }}/bin/go
+      loop: "{{ g_install_go_versions }}"
+
+    - name: Set default go version
+      ansible.builtin.command:
+        cmd: bash -ic "gvm use {{ g_use_go_version }}"
+      changed_when: false
+
+    - name: Validate go install
+      ansible.builtin.command:
+        cmd: bash -o pipefail -ic "go version | cut -d' ' -f3 | sed 's/go//'"
+      changed_when: false
+      register: go_install_check
+      failed_when: go_install_check.stdout != g_use_go_version
