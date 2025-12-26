@@ -4,6 +4,15 @@
   vars:
     git_user_name: User
     git_user_email: user@example.com
+    git_prompt_enable_custom_conf: false
+    git_prompt_sh_path: >-
+      {%- if ansible_facts['os_family'] == "Debian" -%}
+        /usr/lib/git-core/git-sh-prompt
+      {%- else if ansible_facts['os_family'] == "RedHat" -%}
+        /usr/share/git-core/contrib/completion/git-prompt.sh
+      {%- endif -%}
+    # Based on: https://askubuntu.com/a/890697
+    git_prompt_config: GIT_PS1_SHOWCOLORHINTS=true PROMPT_COMMAND='__git_ps1 "'${PS1%???}'" "\n\\\$ "'
 
   tasks:
     - name: Install git (Debian)
@@ -47,3 +56,10 @@
             helper = cache
         dest: ~/.gitconfig
         mode: "0664"
+
+    - name: Custom bash prompt
+      ansible.builtin.lineinfile:
+        line: ". {{ git_prompt_sh_path }} && {{ git_prompt_config }}"
+        path: ~/.bashrc
+        state: present
+      when: git_prompt_enable_custom_conf is truthy
