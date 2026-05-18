@@ -1,0 +1,95 @@
+# Based on:
+# https://docs.docker.com/engine/security/rootless/
+# https://docs.docker.com/engine/security/rootless/troubleshoot/
+---
+- name: Setup rootless Docker
+  hosts: all
+  tasks:
+    - name: Install dependencies (Debian)
+      ansible.builtin.apt:
+        name: curl, tar, uidmap
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install dependencies (RedHat)
+      ansible.builtin.dnf:
+        name: curl-minimal, tar, uidmap
+        state: present
+        update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Add kernel module
+      community.general.modprobe:
+        name: nf_tables
+        state: present
+        persistent: present
+      become: true
+
+    - name: Configure kernel
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_file: /etc/sysctl.d/90-docker.conf
+      become: true
+      loop:
+        - name: kernel.unprivileged_userns_clone
+          value: 1
+        - name: net.ipv4.ip_forward
+          value: 1
+      register: docker_sysctl_configure
+
+    - name: Reboot to apply network config # noqa: no-handler
+      ansible.builtin.reboot:
+      become: true
+      when:
+        - docker_sysctl_configure is changed
+        # Dont reboot in CI since its containers
+        - >
+          "-azure" not in ansible_facts['kernel']
+
+    - name: Download Docker rootless install script
+      ansible.builtin.get_url:
+        url: https://get.docker.com/rootless
+        dest: ~/docker-rootless-setup.sh
+        mode: "0644"
+
+    - name: Run install script
+      ansible.builtin.command:
+        cmd: sh ~/docker-rootless-setup.sh
+        creates: ~/bin/docker
+
+    - name: Configure bashrc
+      ansible.builtin.lineinfile:
+        path: ~/.bashrc
+        line: "{{ item }}"
+        state: present
+      loop:
+        - PATH="$HOME/bin:$PATH"
+        - export DOCKER_HOST=unix:///run/user/{{ ansible_facts['user_uid'] }}/docker.sock
+
+    - name: Start and enable docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+        scope: user
+
+    - name: Store non-root user name
+      ansible.builtin.set_fact:
+        docker_non_root_user: "{{ ansible_facts['user_id'] }}"
+
+    - name: Enable docker start for user service
+      ansible.builtin.command:
+        cmd: loginctl enable-linger {{ docker_non_root_user }}
+        creates: /var/lib/systemd/linger/{{ docker_non_root_user }}
+      become: true
+
+    - name: Validate docker usage
+      ansible.builtin.command:
+        cmd: docker run --rm hello-world
+      changed_when: false
