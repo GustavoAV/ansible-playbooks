@@ -12,7 +12,7 @@
         update_cache: true
         cache_valid_time: 3600
       become: true
-      when: ansible_facts['os_family'] == "Debian"
+      when: ansible_facts.os_family == "Debian"
 
     - name: Install dependencies (RedHat)
       ansible.builtin.dnf:
@@ -20,7 +20,7 @@
         state: present
         update_cache: true
       become: true
-      when: ansible_facts['os_family'] == "RedHat"
+      when: ansible_facts.os_family == "RedHat"
 
     - name: Add kernel module
       community.general.modprobe:
@@ -49,8 +49,7 @@
       when:
         - docker_sysctl_configure is changed
         # Dont reboot in CI since its containers
-        - >
-          "-azure" not in ansible_facts['kernel']
+        - '"-azure" not in ansible_facts.kernel'
 
     - name: Download Docker rootless install script
       ansible.builtin.get_url:
@@ -70,7 +69,7 @@
         state: present
       loop:
         - PATH="$HOME/bin:$PATH"
-        - export DOCKER_HOST=unix:///run/user/{{ ansible_facts['user_uid'] }}/docker.sock
+        - export DOCKER_HOST=unix:///run/user/{{ ansible_facts.user_uid }}/docker.sock
 
     - name: Start and enable docker service
       ansible.builtin.systemd:
@@ -81,7 +80,7 @@
 
     - name: Store non-root user name
       ansible.builtin.set_fact:
-        docker_non_root_user: "{{ ansible_facts['user_id'] }}"
+        docker_non_root_user: "{{ ansible_facts.user_id }}"
 
     - name: Enable docker start for user service
       ansible.builtin.command:
