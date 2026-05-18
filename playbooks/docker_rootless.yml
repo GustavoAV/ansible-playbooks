@@ -7,7 +7,14 @@
   tasks:
     - name: Install dependencies (Debian)
       ansible.builtin.apt:
-        name: curl, tar, uidmap
+        name:
+          # Basic
+          - curl
+          - tar
+          # Contains "newuidmap" and "newgidmap"
+          - uidmap
+          # Contains "modprobe"
+          - kmod
         state: present
         update_cache: true
         cache_valid_time: 3600
@@ -16,7 +23,14 @@
 
     - name: Install dependencies (RedHat)
       ansible.builtin.dnf:
-        name: curl-minimal, tar, uidmap
+        name:
+          # Basic
+          - curl-minimal
+          - tar
+          # Contains "newuidmap" and "newgidmap"
+          - shadow-utils
+          # Contains "modprobe"
+          - kmod
         state: present
         update_cache: true
       become: true
